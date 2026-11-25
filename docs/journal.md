@@ -1,12 +1,23 @@
 # Project Journal
 
-A running log of work on this repo and a tracker of known issues. Add new log
-entries at the top. Never delete an issue: when it is fixed, change its status
-and note how it was fixed.
+A running log of work on this repo, a tracker of known issues, and a list of
+planned work. Add new log entries at the top. Never delete an issue: when it
+is fixed, change its status and note how it was fixed.
 
 ---
 
 ## Log
+
+### 2026-11-22: Planned LLM-driven routing and real tool calling
+
+- Right now the router (`router.py`) is pure keyword and regex rules. The
+  model plays no part in choosing a category.
+- Decided to add LLM-driven classification, with the rule router kept
+  alongside it. Logged as P1 under [Planned work](#planned-work).
+- Right now the calculator is triggered by code (`looks_arithmetic` keyword
+  check), not chosen by the model. Decided to move to real tool calling, where
+  the model picks tools itself, and to add more tools. Logged as P2.
+- No code changes yet.
 
 ### 2026-11-22: README rewrite and code-path audit
 
@@ -51,3 +62,15 @@ the dev set · **Read** = from reading the code, not yet run.
 | 17 | Low | Deps | `requirements.txt` pins about 35 packages, but `src/` only imports `requests` and `python-dotenv` (as `pyproject.toml` says). The two files have drifted apart. | Read | Open |
 | 18 | Low | Cleanup | `generate_answers.py` docstring still describes a placeholder generator, and `from importlib.resources import path` is unused. | Read | Open |
 | 19 | Low | Docs | The README's Mermaid diagram hasn't been checked on GitHub, since no renderer was available locally. | — | Open |
+
+---
+
+## Planned work
+
+Features and improvements we've decided to build. They aren't bugs. When one
+ships, set its status to Done and add a log entry.
+
+| ID | Area | Plan | Status |
+|---|---|---|---|
+| P1 | Router | **LLM-driven routing.** Add one LLM call that classifies each question into one of the 8 categories, so the agent picks its own reasoning path. Keep the rule-based router and run both. (a) If they agree, use that category. (b) If the LLM call fails or returns an invalid category, fall back to the rules. (c) If they disagree, log the question and both labels so the disconnects can be studied. Disagreements should be rare. Choosing which side wins on a disagreement is still open: compare both against the dev-set domains before deciding. Costs +1 call per question, counted in `CallCounter` (well under the 20-call cap). This should also help with issues #4 and #6. | Planned |
+| P2 | Tools | **Real tool calling.** Today the code decides when to use the calculator (the `looks_arithmetic` keyword check in `graph.py`), the model only writes an expression, and the calculator is the only tool. Change this so the model chooses: pass the tools through the API's function-calling interface (the `tools` parameter on the OpenAI-compatible endpoint), let the model decide whether to call one and with what arguments, run it, and send the result back to the model. Add more tools beyond the calculator. First check that both backends (SOL and Ollama) support function calling with this model. Every model turn in the tool loop counts against `CallCounter`. Also fix issue #15 (`**` can hang the calculator) as part of this work. | Planned |
